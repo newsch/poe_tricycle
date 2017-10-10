@@ -17,11 +17,14 @@ int fullSpeed=128;
 int leftError;
 int rightError;
 
+int leftSpeed;
+int rightSpeed;
+
 int cumulativeError=0; //negative is left, positive is right
 int leftDerivative;
 int rightDerivative;
 
-float proportionalWeight=1/8;
+float proportionalWeight=1/8.0;
 float integralWeight=0.001;
 float derivativeWeight=0.001;
 
@@ -39,7 +42,7 @@ void setup() {
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
+  // TODO: offset sensor by 300 so black tape reads as 0
   leftSensor=1024-analogRead(A0);
   rightSensor=1024-analogRead(A1);
 
@@ -49,7 +52,7 @@ void loop() {
   Serial.print("\t");
   Serial.print(leftError);
   Serial.print("\t");
-Serial.println(rightError);
+  Serial.println(rightError);
 
   //LEFT PRECALCULATION
   if(leftSensor>floorBrightness){
@@ -73,12 +76,29 @@ Serial.println(rightError);
 
   //LEFT CONTROL
   leftDerivative=leftError-oldLeftError;
-  left->setSpeed(fullSpeed-(proportionalWeight*leftError+integralWeight*cumulativeError+derivativeWeight*leftDerivative));
+  // left->setSpeed(fullSpeed-(proportionalWeight*leftError+integralWeight*cumulativeError+derivativeWeight*leftDerivative));
+  leftSpeed = fullSpeed-(proportionalWeight*leftError);
+  left->setSpeed(leftSpeed);
 
   //RIGHT CONTROL
   rightDerivative=rightError-oldRightError;
-  right->setSpeed(fullSpeed-(proportionalWeight*rightError+integralWeight*cumulativeError+derivativeWeight*rightDerivative));
+  // right->setSpeed(fullSpeed-(proportionalWeight*rightError+integralWeight*cumulativeError+derivativeWeight*rightDerivative));
+  rightSpeed = fullSpeed-(proportionalWeight*rightError);
+  right->setSpeed(rightSpeed);
 
+  // Serial.print(leftError);
+  // Serial.print("\t");
+  // Serial.print(rightError);
+  // Serial.print("\t");
+  // Serial.print(leftSpeed);
+  // Serial.print("\t");
+  // Serial.println(rightSpeed);
+
+  // Serial.print(proportionalWeight);
+  // Serial.print("\t");
+  // Serial.print(leftError);
+  // Serial.print("\t");
+  // Serial.println(proportionalWeight * leftError);
 
   oldLeftError=leftError;
   oldRightError=rightError;
