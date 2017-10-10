@@ -51,14 +51,6 @@ void loop() {
   Serial.print("\t");
 Serial.println(rightError);
 
-  //RIGHT PRECALCULATION
-  if(rightSensor>floorBrightness){
-    rightError=0;
-  }
-  else{
-    rightError=floorBrightness-rightSensor;
-  }
-
   //LEFT PRECALCULATION
   if(leftSensor>floorBrightness){
     leftError=0;
@@ -67,25 +59,26 @@ Serial.println(rightError);
     leftError=floorBrightness-leftSensor;
   }
 
+
+  //RIGHT PRECALCULATION
+  if(rightSensor>floorBrightness){
+    rightError=0;
+  }
+  else{
+    rightError=floorBrightness-rightSensor;
+  }
+
+  //CALCULATING THE SHARED INTEGRAL TERM
   cumulativeError=(-1)*leftError+rightError; //calculates the reimann sum term. To be used in both left and right control
 
   //LEFT CONTROL
-  if(leftError==0){
-    left->setSpeed(fullSpeed);
-  }
-  else{
-    leftDerivative=leftError-oldLeftError;
-    left->setSpeed(fullSpeed-(proportionalWeight*leftError+integralWeight*cumulativeError+derivativeWeight*leftDerivative));
-  }
+  leftDerivative=leftError-oldLeftError;
+  left->setSpeed(fullSpeed-(proportionalWeight*leftError+integralWeight*cumulativeError+derivativeWeight*leftDerivative));
 
   //RIGHT CONTROL
-  if(rightError==0){
-    right->setSpeed(fullSpeed);
-  }
-  else{
-    rightDerivative=rightError-oldRightError;
-    right->setSpeed(fullSpeed-(proportionalWeight*rightError+integralWeight*cumulativeError+derivativeWeight*rightDerivative));
-  }
+  rightDerivative=rightError-oldRightError;
+  right->setSpeed(fullSpeed-(proportionalWeight*rightError+integralWeight*cumulativeError+derivativeWeight*rightDerivative));
+
 
   oldLeftError=leftError;
   oldRightError=rightError;
