@@ -18,7 +18,8 @@ int leftError;
 int rightError;
 
 int cumulativeError=0; //negative is left, positive is right
-int derivative;
+int leftDerivative;
+int rightDerivative;
 
 float proportionalWeight=1/8;
 float integralWeight=0.001;
@@ -30,9 +31,9 @@ int oldRightError;
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(9600);
-  
+
   AFMS.begin();
-  
+
   left->run(FORWARD);
   right->run(FORWARD);
 }
@@ -44,7 +45,11 @@ void loop() {
 
   Serial.print(leftSensor);
   Serial.print("\t");
-  Serial.println(rightSensor);
+  Serial.print(rightSensor);
+  Serial.print("\t");
+  Serial.print(leftError);
+  Serial.print("\t");
+Serial.println(rightError);
 
   //RIGHT PRECALCULATION
   if(rightSensor>floorBrightness){
@@ -54,31 +59,34 @@ void loop() {
     rightError=floorBrightness-rightSensor;
   }
 
-  //LEFT CONTROL
+  //LEFT PRECALCULATION
   if(leftSensor>floorBrightness){
-    left->setSpeed(fullSpeed);
     leftError=0;
   }
   else{
     leftError=floorBrightness-leftSensor;
-    cumulativeError=(-1)*leftError+rightError; //calculates the reimann sum term. To be used in both left and right control
-    derivative=leftError-oldLeftError;
-    left->setSpeed(fullSpeed-(proportionalWeight*leftError+integralWeight*cumulativeError+derivativeWeight*derivative));
   }
-  oldLeftError=leftError;
 
-  //RIGHT CONTORL
-  if(rightSensor>floorBrightness){
-    right->setSpeed(fullSpeed);
-    rightError=0;
+  cumulativeError=(-1)*leftError+rightError; //calculates the reimann sum term. To be used in both left and right control
+
+  //LEFT CONTROL
+  if(leftError==0){
+    left->setSpeed(fullSpeed);
   }
   else{
-    rightError=floorBrightness=rightSensor;
-    derivative=leftError-oldLeftError;
-    right->setSpeed(fullSpeed-(proportionalWeight*leftError+integralWeight*cumulativeError+derivativeWeight*derivative));
+    leftDerivative=leftError-oldLeftError;
+    left->setSpeed(fullSpeed-(proportionalWeight*leftError+integralWeight*cumulativeError+derivativeWeight*leftDerivative));
   }
-  rightError=oldRightError;
 
+  //RIGHT CONTROL
+  if(rightError==0){
+    right->setSpeed(fullSpeed);
+  }
+  else{
+    rightDerivative=rightError-oldRightError;
+    right->setSpeed(fullSpeed-(proportionalWeight*rightError+integralWeight*cumulativeError+derivativeWeight*rightDerivative));
+  }
 
-
+  oldLeftError=leftError;
+  oldRightError=rightError;
 }
