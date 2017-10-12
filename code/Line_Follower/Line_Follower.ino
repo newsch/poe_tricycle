@@ -7,8 +7,8 @@ Adafruit_MotorShield AFMS = Adafruit_MotorShield();
 Adafruit_DCMotor *left=AFMS.getMotor(1);
 Adafruit_DCMotor *right=AFMS.getMotor(2);
 
-#define DEBUG  // print sensor and motor data to serial
-// #define SERIAL_INPUT  // rudimentary serial control
+// #define DEBUG  // print sensor and motor data to serial
+#define SERIAL_INPUT  // rudimentary serial control
 
 int maxFloorBrightness = 900;
 int minTapeBrightness = 750;
