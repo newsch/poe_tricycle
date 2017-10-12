@@ -13,39 +13,50 @@ int minTapeBrightness = 750;
 int leftSensor;
 int rightSensor;
 
-int fullSpeed=32;
-
-int leftError;
-int rightError;
+int maxSpeed=32;
 
 int leftSpeed;
 int rightSpeed;
 
-int cumulativeError=0; //negative is left, positive is right
-int leftDerivative;
-int rightDerivative;
-
-float proportionalWeight=1/8.0;
-float integralWeight=0.001;
-float derivativeWeight=0.001;
+int leftError;
+int rightError;
 
 int oldLeftError;
 int oldRightError;
 
 void setup() {
-  // put your setup code here, to run once:
-  Serial.begin(9600);
+  Serial.begin(9600);  // initialize serial port
+  AFMS.begin();  // initialize motor shield
 
-  AFMS.begin();
-
+  // set motor direction
   left->run(FORWARD);
   right->run(FORWARD);
 }
 
 void loop() {
-  // TODO: offset sensor by 300 so black tape reads as 0
-  leftSensor = constrain(1024 - analogRead(A0), minTapeBrightness, maxFloorBrightness);
-  rightSensor = constrain(1024 - analogRead(A1), minTapeBrightness, maxFloorBrightness);
+  leftSensor = 1024 - analogRead(A0);
+  rightSensor = 1024 - analogRead(A1);
+
+  // PRECALCULATIONS
+  leftError = constrain(maxFloorBrightness-leftSensor, 0, maxFloorBrightness);
+  rightError = constrain(maxFloorBrightness-rightSensor, 0,  maxFloorBrightness);
+
+  // LEFT/RIGHT CONTROL
+  leftSpeed = maxSpeed - map(leftError, 0, maxFloorBrightness - minTapeBrightness, 0, maxSpeed);
+  rightSpeed = maxSpeed - map(rightError, 0, maxFloorBrightness - minTapeBrightness, 0, maxSpeed);
+
+  // prevent stopping when both sensors see tape on sharp turns
+  if (leftSpeed == 0 && rightSpeed == 0) {
+    leftSpeed = 5;
+    rightSpeed = 5;
+  }
+
+  // set motor speeds
+  left->setSpeed(leftSpeed);
+  right->setSpeed(rightSpeed);
+
+  oldLeftError=leftError;
+  oldRightError=rightError;
 
   Serial.print(analogRead(A0));
   Serial.print("\t");
@@ -58,57 +69,4 @@ void loop() {
   Serial.print(leftError);
   Serial.print("\t");
   Serial.println(rightError);
-
-  //LEFT PRECALCULATION
-  if(leftSensor>maxFloorBrightness){
-    leftError=0;
-  }
-  else{
-    leftError = constrain(maxFloorBrightness-leftSensor, 0, maxFloorBrightness);
-  }
-
-
-  //RIGHT PRECALCULATION
-  if(rightSensor>maxFloorBrightness){
-    rightError=0;
-  }
-  else{
-    rightError = constrain(maxFloorBrightness-rightSensor, 0,  maxFloorBrightness);
-  }
-
-  //CALCULATING THE SHARED INTEGRAL TERM
-  cumulativeError=(-1)*leftError+rightError; //calculates the reimann sum term. To be used in both left and right control
-
-  //LEFT/RIGHT CONTROL
-  leftDerivative=leftError-oldLeftError;
-  rightDerivative=rightError-oldRightError;
-  // left->setSpeed(fullSpeed-(proportionalWeight*leftError+integralWeight*cumulativeError+derivativeWeight*leftDerivative));
-  // right->setSpeed(fullSpeed-(proportionalWeight*rightError+integralWeight*cumulativeError+derivativeWeight*rightDerivative));
-  leftSpeed = fullSpeed - map(leftError, 0, maxFloorBrightness - minTapeBrightness, 0, fullSpeed);
-  rightSpeed = fullSpeed - map(rightError, 0, maxFloorBrightness - minTapeBrightness, 0, fullSpeed);
-
-  if (leftSpeed == 0 && rightSpeed == 0) {
-    leftSpeed == 5;
-    rightSpeed == 5;
-  }
-
-  left->setSpeed(leftSpeed);
-  right->setSpeed(rightSpeed);
-
-  // Serial.print(leftError);
-  // Serial.print("\t");
-  // Serial.print(rightError);
-  // Serial.print("\t");
-  // Serial.print(leftSpeed);
-  // Serial.print("\t");
-  // Serial.println(rightSpeed);
-
-  // Serial.print(proportionalWeight);
-  // Serial.print("\t");
-  // Serial.print(leftError);
-  // Serial.print("\t");
-  // Serial.println(proportionalWeight * leftError);
-
-  oldLeftError=leftError;
-  oldRightError=rightError;
 }
